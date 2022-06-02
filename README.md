@@ -9,10 +9,13 @@
 #### IPFS
 
 - Upload a folder containing all the NFTs images to `Pinata`. You can check that it actually got uploaded to IPFS is by opening this up: 
-*https://ipfs.io/ipfs/<your-nft-folder-cid>*.
+*https://ipfs.io/ipfs/your-nft-folder-cid*.
 
 - Create one json file per image with the attributes: *name*, *description* and *image*. Note how *image* has *ipfs* location in it instead of an *https* url. 
 
 - Upload a folder containing all the metadata json files (one per NFT) to `Pinata`.
 
 
+### Tricks 
+
+- To delete the artifacts ---> `npx hardhat clean`
