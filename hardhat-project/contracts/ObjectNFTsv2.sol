@@ -8,6 +8,8 @@ pragma solidity ^0.8.4;
  * Its only purpose to test the getTokensForSale() function, calling it from the frontend
  * The buyToken() function has not been implemented yet
  * WARNING: functions not tested yet.
+ *
+ * Some assumptions: there is no a secondary market and the user always retains the NFTs he bought.
  */
 
 import "erc721a/contracts/ERC721A.sol";
@@ -43,6 +45,7 @@ contract ObjectNFTsV2 is ERC721A, Ownable, ReentrancyGuard {
     NftToken nftToken;
     NftToken[] nftTokenArray;
     NftToken[] nftTokensForSale;
+    NftToken[] nftTokensOwned;
 
     string public collectionName;
     string public collectionSymbol;
@@ -55,6 +58,28 @@ contract ObjectNFTsV2 is ERC721A, Ownable, ReentrancyGuard {
     uint256 public mintedTokens;
 
     mapping(uint256 => NftToken) idToCollectionTokens;
+
+    /**
+     * @dev ERC721 constructor takes in a `name` and a `symbol` to the token collection.
+     * Constructor takes in the baseURI to set _baseTokenURI for the collection.
+     */
+    constructor(
+        string memory _collectionName,
+        string memory _collectionSymbol,
+        string memory _baseURI
+    )
+        // address _makerAddress,
+        // NftToken[] memory _nftsInCollection
+        ERC721A(_collectionName, _collectionSymbol)
+    {
+        collectionName = _collectionName;
+        collectionSymbol = _collectionSymbol;
+        baseURI = _baseURI;
+        // nftsInCollection = _nftsInCollection;  // compile error
+        _populateArray();
+        // _initCollectionTokens(_nftsInCollection);
+        // makerAddress = _makerAddress;
+    }
 
     /*************************************************************
      * This will come from the backend (maker flow)
@@ -80,28 +105,6 @@ contract ObjectNFTsV2 is ERC721A, Ownable, ReentrancyGuard {
     }
 
     //**************************************************************/
-
-    /**
-     * @dev ERC721 constructor takes in a `name` and a `symbol` to the token collection.
-     * Constructor takes in the baseURI to set _baseTokenURI for the collection.
-     */
-    constructor(
-        string memory _collectionName,
-        string memory _collectionSymbol,
-        string memory _baseURI
-    )
-        // address _makerAddress,
-        // NftToken[] memory _nftsInCollection
-        ERC721A(_collectionName, _collectionSymbol)
-    {
-        collectionName = _collectionName;
-        collectionSymbol = _collectionSymbol;
-        baseURI = _baseURI;
-        // nftsInCollection = _nftsInCollection;  // compile error
-        _populateArray();
-        // _initCollectionTokens(_nftsInCollection);
-        // makerAddress = _makerAddress;
-    }
 
     //  Not used
     function _initCollectionTokens(NftToken[] memory _nftTokens) internal {
@@ -150,8 +153,31 @@ contract ObjectNFTsV2 is ERC721A, Ownable, ReentrancyGuard {
         return nftTokensForSale;
     }
 
-    function buyToken(NftToken memory _nftToken) public {
-        // TODO
+    /*
+     * The price is not in stable coins, but in the native token (matics for Mumbai or Ethers for Ethereum)
+     */
+    function buyToken(NftToken memory _nftToken) public payable {
+        uint256 mintPrice = _nftToken.price;
+        if (msg.value < mintPrice) {
+            revert("Not enough money to buy the NFT");
+        }
+        // (bool success, ) = IERC20(WETH).transferFrom(msg.sender, address(this), mintPrice);
+        // bool success = this.transferFrom(msg.sender, address(this), mintPrice);
+        // require(success);
+        safeTransferFrom(owner(), msg.sender, _nftToken.tokenId);
+        _nftToken.owner = msg.sender;
+    }
+
+    function getUserTokens() public returns (NftToken[] memory) {
+        for (uint256 i = 0; i < numOfNfts; ) {
+            if (nftTokenArray[i].owner == msg.sender) {
+                nftTokensOwned.push(nftTokenArray[i]);
+            }
+            unchecked {
+                i++;
+            }
+        }
+        return nftTokensOwned;
     }
 
     /**

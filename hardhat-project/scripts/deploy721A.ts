@@ -13,7 +13,7 @@ async function main() {
 
   // deploy the contract
   let price = 2; //ethers.BigNumber.from("2");
-  const deployedObjectsV2Contract = await ObjectsV2Contract.deploy("MyNFT", "YFT", metadataURL, price.toString()); //  RANDOM_ADDRESS);
+  const deployedObjectsV2Contract = await ObjectsV2Contract.deploy("MyNFT", "YFT", metadataURL); //  RANDOM_ADDRESS);
   // collectionName = _collectionName;
   // collectionSymbol = _collectionSymbol;
   // baseURI = _baseURI;
